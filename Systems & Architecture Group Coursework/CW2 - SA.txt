@@ -1,0 +1,241 @@
+1:  BFS
+
+
+			
+			AREA bfscmp, CODE, READONLY
+			
+			ADR r1, og		;r1 pointer to original array
+			ADR r4, og		;r4 pointer to start of sorted array
+			ADR r10, sorted	;r10 pointer to sorted array
+			ADR r9, sorted		;r9 pointer to sorted array			
+			MOV r0, #0		;set initial counter to 0
+			MOV r5, #0		;stored value counter
+			MOV r6, #0		;compared initialise
+			LDRB r2,[r1],#1	;load value pointed by r1 into r2, then pointer increments and points to next value
+			
+comp
+		CMP r0, #14
+		BEQ storenum	;store final number in register(6) which will be compared to, and slot number into sorted array
+		BL checksorted	;branch to check if number has appeared in sorted array, skips it if it is already inside
+		ADR r4, og		;reset both pointers back to original poisition at the front of each list
+		ADR r9, sorted
+		LDRB r3,[r1],#1	;load value pointed by r1 into r3, then increments r1 pointer to point to next element
+		CMP r3,r6
+		BLE	skip		;skip means r1 has already been stored, because any value that is stored should be smaller or equal to the recent stored number, and inside skip, r2 should be loaded with new values
+		CMPGT r2,r3		;if r3 is smaller than r2, then replace r2 with r3
+		BLGE changemain
+		ADD r0, r0,#1
+		B comp
+		
+skip
+		ADD r0, r0,#1
+		B comp
+		
+changemain
+		MOV r2,r3		;replaces r2 with r3
+		BX lr			;branches back to link register
+		
+storenum
+		MOV r0, #0		;reset counter
+		MOV r6, r2		;compared (number must be greater than this to be stored)
+		STRB r2, [r10], #1	;r10 points to the memory location of sorted array, stores final value there. increment pointer by one to point to next index of sorted array
+		ADD r5, r5,#1	;r5++
+		CMP r5, #15		;if numbers that have been stored = 15(size of array), then ends program
+		BEQ endprog
+		ADR r1, og		;r1 re-points to start of original array
+		ADR r9, og		;r9 also re-points to start of orignal array
+		LDRB r2,[r1],#1	;load value pointed by r1 into r2, then pointer increments and points to next value
+		B comp			;go back to comp
+		
+checksorted
+		LDRB r8,[R9],#1
+		CMP r8,0x00
+		BXEQ lr
+		CMP r2,r8
+		BEQ changeori
+		B checksorted
+		
+changeori
+		LDRB r2, [r4],#1
+		ADR r9, sorted
+		B checksorted
+		
+endprog B endprog
+		
+og		DCB		10, 5, 30, 78, 2, 19, 11, 23, 48, 79, 1, 14, 9, 41, 31
+sorted	SPACE	15
+			END
+
+
+
+
+
+
+2: MERGE SORT
+
+;NOTES BEFORE RUNNING CODE, WHEN MAPPING MEMORY, MUST MAP FROM THE START OF THE FIRST LIST - THE ADDRESS THAT APPEARS IN R1, AND GIVE PERMISSION/ACCESS FOR READ, WRITE AND ALSO EXECUTE
+;THE FINAL SORTED ARRAY WILL APPEAR IN LIST ONE
+
+
+			AREA mergethis, CODE, READONLY
+			ENTRY
+	
+			ADR r1, listone	;final sorted array will appear in this array
+			ADR r2, listtwo
+			MOV r8, #0
+
+layerone
+		CMP r8, #10
+		BEQ resettotwo
+		LDRB r3,[r1],#1
+		LDRB r4,[r1],#1
+		CMP r3,r4
+		STRBLT r3,[r2],#1
+		STRBGT r4,[r2],#1
+		STRBLT r4,[r2],#1
+		STRBGT r3,[r2],#1
+		ADD r8, r8, #2
+		B layerone
+
+listone	DCB		8,50,81,29,4,24,23,30,1,7
+listtwo	SPACE	10
+	
+resettotwo
+		MOV r8,#0
+		ADR r1, listtwo
+		ADR r2, listone
+		MOV r5, r1
+		ADD r5, #2			;r5 is second pointer
+		MOV r11, r5				;r11 is anchor that signals end of rhs list
+		MOV r7, r1				;r7 is anchor that signals end of lhs list, once r11/r7 equals to respective pointer, branches to copy the list
+		ADD r7, #4
+		LDRB r3,[r1],#1
+		LDRB r4,[r5],#1
+		B layertwo
+		
+resettothree
+		MOV r8, #0
+		ADR r1, listone
+		ADR r2, listtwo
+		MOV r5, r1
+		ADD r5, #4				;r5 is second pointer
+		MOV r11, r5				;r11 is anchor that signals end of rhs list
+		MOV r7, r1				;r7 is anchor that signals end of lhs list, once r11/r7 equals to respective pointer, branches to copy the list
+		ADD r7, #8
+		LDRB r3,[r1],#1
+		LDRB r4,[r5],#1
+		B layerthree
+		
+resettofour
+		MOV r8, #0
+		ADR r1, listtwo
+		ADR r2, listone
+		MOV r5, r1
+		ADD r5, #8			;r5 is second pointer
+		MOV r11, r5				;r11 is anchor that signals end of rhs list
+		MOV r7, r1				;r7 is anchor that signals end of lhs list, once r11/r7 equals to respective pointer, branches to copy the list
+		ADD r7, #10
+		LDRB r3,[r1],#1
+		LDRB r4,[r5],#1
+		B layerfour
+		
+layertwo
+		CMP r8, #4
+		BLEQ reindex2
+		CMP r8, #8
+		BEQ resettothree
+		CMP r1, r11
+		BGT endrhs2
+		CMP r5, r7
+		BGT endlhs2
+		CMP r3,r4
+		STRBLT r3,[r2],#1
+		STRBGT r4,[r2],#1
+		LDRBLT r3,[r1],#1
+		LDRBGT r4,[r5],#1
+		ADD r8, r8,#1
+		B layertwo
+
+reindex2 ;should point to second set of 2 element lists
+		ADR r1, listtwo
+		ADD r1, r1, #4
+		MOV r5, r1
+		ADD r5, #2			;r5 is second pointer
+		MOV r11, r5				;r11 is anchor that signals end of rhs list
+		MOV r7, r1				;r7 is anchor that signals end of lhs list, once r11/r7 equals to respective pointer, branches to copy the list
+		ADD r7, #4
+		LDRB r3,[r1],#1
+		LDRB r4,[r5],#1
+		BX lr
+
+
+endrhs2		;when right hand side list has all been merged, should copy all leftover left hand side array value into list
+		STRB r4, [r2],#1
+		LDRB r4, [r5],#1
+		ADD r8, r8,#1
+		B layertwo
+
+endlhs2		;when right hand side list has all been merged, should copy all leftover left hand side array value into list
+		STRB r3, [r2],#1
+		LDRB r3, [r1],#1
+		ADD r8, r8,#1
+		B layertwo
+		
+layerthree 
+		CMP r8, #8
+		BEQ resettofour
+		CMP r1, r11
+		BGT endrhs3
+		CMP r5, r7
+		BGT endlhs3
+		CMP r3,r4
+		STRBLT r3,[r2],#1
+		STRBGT r4,[r2],#1
+		LDRBLT r3,[r1],#1
+		LDRBGT r4,[r5],#1
+		ADD r8, r8,#1
+		B layerthree
+		
+
+endrhs3		;when right hand side list has all been merged, should copy all leftover left hand side array value into list
+		STRB r4, [r2],#1
+		LDRB r4, [r5],#1
+		ADD r8, r8,#1
+		B layerthree
+
+endlhs3		;when right hand side list has all been merged, should copy all leftover left hand side array value into list
+		STRB r3, [r2],#1
+		LDRB r3, [r1],#1
+		ADD r8, r8,#1
+		B layerthree
+
+layerfour 
+		CMP r8, #10
+		BEQ done
+		CMP r1, r11
+		BGT endrhs4
+		CMP r5, r7
+		BGT endlhs4
+		CMP r3,r4
+		STRBLT r3,[r2],#1
+		STRBGT r4,[r2],#1
+		LDRBLT r3,[r1],#1
+		LDRBGT r4,[r5],#1
+		ADD r8, r8,#1
+		B layerfour
+
+endrhs4		;when right hand side list has all been merged, should copy all leftover left hand side array value into list
+		STRB r4, [r2],#1
+		LDRB r4, [r5],#1
+		ADD r8, r8,#1
+		B layerfour
+
+endlhs4		;when right hand side list has all been merged, should copy all leftover left hand side array value into list
+		STRB r3, [r2],#1
+		LDRB r3, [r1],#1
+		ADD r8, r8,#1
+		B layerfour
+
+done B done
+	
+			END
