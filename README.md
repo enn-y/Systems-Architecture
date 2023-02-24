@@ -5,4 +5,4 @@
 ---
 - Coursework: 
 
-![alt text]([https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Computer_system_bus.svg/1200px-Computer_system_bus.svg.png](https://www.gatevidyalay.com/wp-content/uploads/2022/02/Data-Bus-Address-Bus-Control-Bus.png))
+![alt text](https://www.gatevidyalay.com/wp-content/uploads/2022/02/Data-Bus-Address-Bus-Control-Bus.png)
