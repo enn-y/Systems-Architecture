@@ -5,4 +5,4 @@
 ---
 - Coursework: 
 
-
+![alt text](https://upload.wikimedia.org/wikipedia/commons/thumb/6/68/Computer_system_bus.svg/1200px-Computer_system_bus.svg.png)
